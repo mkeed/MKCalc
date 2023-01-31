@@ -1,5 +1,6 @@
 const std = @import("std");
 const draw = @import("Draw.zig");
+const execute = @import("execute.zig");
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
@@ -32,7 +33,9 @@ pub fn main() !void {
     };
 
     try draw.DrawScreen(&items, .{ .rows = 20, .cols = 64 }, 0, stdout);
-
+    var file = try std.fs.cwd().createFile("main.c", .{});
+    defer file.close();
+    try execute.c_code(file.writer());
     try bw.flush(); // don't forget to flush!
 }
 
