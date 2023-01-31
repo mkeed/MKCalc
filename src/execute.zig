@@ -33,6 +33,7 @@ fn range(start: u8, end: u8) MatchCase {
 const TokenType = enum {
     Number,
     Operator,
+    Identifier,
 };
 
 const TokenInfo = struct {
@@ -48,13 +49,27 @@ const tokenInfos = [_]TokenInfo{
         .tokenType = .Number,
     },
     .{
-        .begin = &.{ .list = "+-/*" },
+        .begin = &.{.{ .list = "+-/*" }},
         .internal = &.{},
         .tokenType = .Operator,
     },
+    .{
+        .begin = &.{ range('a', 'z'), range('A', 'Z') },
+        .internal = &.{
+            range('a', 'z'),
+            range('A', 'Z'),
+            .{ .list = "_" },
+        },
+        .tokenType = .Identifier,
+    },
 };
 
-fn tokenize(equation: []const u8, alloc: std.mem.allocator) ![]Token {}
+fn tokenize(equation: []const u8, alloc: std.mem.allocator) ![]Token {
+    var count: usize = 0;
+    while (count < equation.len) : (count += 1) {
+        for (tokenInfos) |ti| {}
+    }
+}
 
 const TestCase = struct {
     equation: []const u8,
