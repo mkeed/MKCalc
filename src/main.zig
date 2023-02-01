@@ -19,7 +19,15 @@ pub fn main() !void {
             },
         },
         .{
-            .equation = "12 + 01",
+            .equation = "12 + 01 + 0x1F + 0b0110 ",
+            .result = .{
+                .dec = "13",
+                .hex = "0xB",
+                .binary = &.{ true, false, true, true },
+            },
+        },
+        .{
+            .equation = "12 + min(01,0x1F)",
             .result = .{
                 .dec = "13",
                 .hex = "0xB",
