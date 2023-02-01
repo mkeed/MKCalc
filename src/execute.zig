@@ -64,6 +64,12 @@ const tokenInfos = [_]TokenInfo{
     },
 };
 
+pub const Token = struct {
+    start: usize,
+    end: usize,
+    tokenType: TokenType,
+};
+
 fn tokenize(equation: []const u8, alloc: std.mem.allocator) ![]Token {
     var count: usize = 0;
     while (count < equation.len) : (count += 1) {
