@@ -1,8 +1,9 @@
 const std = @import("std");
 const Result = usize;
-pub fn execute(equation: []const u8) !Result {
+pub fn execute(equation: []const u8, alloc: std.mem.Allocator) !Result {
     //
-    _ = equation;
+    var tokens = try tokenize(equation, alloc);
+    defer tokens.deinit();
     return 1;
 }
 
@@ -13,6 +14,7 @@ const MatchCase = union(enum) {
     };
     range: Range,
     list: []const u8,
+
     pub fn match(self: MatchCase, val: u8) bool {
         switch (self) {
             .range => |r| {
@@ -40,6 +42,24 @@ const TokenInfo = struct {
     begin: []const MatchCase,
     internal: []const MatchCase,
     tokenType: TokenType,
+    pub fn match(self: TokenInfo, text: []const u8) ?usize {
+        var anyMatch = false;
+        for (self.begin) |b| {
+            if (b.match(text[0])) {
+                anyMatch = true;
+                var count: usize = 1;
+                while (count < text.len) : (count += 1) {
+                    var internalMatch = false;
+                    for (self.internal) |i| {
+                        if (i.match(text[count])) internalMatch = true;
+                    }
+                    if (internalMatch == false) return count;
+                }
+            }
+        }
+        if (anyMatch == false) return null;
+        return text.len;
+    }
 };
 
 const tokenInfos = [_]TokenInfo{
@@ -70,11 +90,19 @@ pub const Token = struct {
     tokenType: TokenType,
 };
 
-fn tokenize(equation: []const u8, alloc: std.mem.allocator) ![]Token {
+fn tokenize(equation: []const u8, alloc: std.mem.Allocator) !std.ArrayList(Token) {
     var count: usize = 0;
+    var tokens = std.ArrayList(Token).init(alloc);
+    errdefer tokens.deinit();
     while (count < equation.len) : (count += 1) {
-        for (tokenInfos) |ti| {}
+        for (tokenInfos) |ti| {
+            if (ti.match(equation[count..])) |m| {
+                std.log.info("match:[{s}] token:{}", .{ equation[count..][0..m], ti.tokenType });
+                count += (m - 1);
+            }
+        }
     }
+    return tokens;
 }
 
 const TestCase = struct {

@@ -3,16 +3,12 @@ const draw = @import("Draw.zig");
 const execute = @import("execute.zig");
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
-
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const alloc = gpa.allocator();
     const items = [_]draw.DrawItem{
         .{
             .equation = "10 + 1",
@@ -36,6 +32,9 @@ pub fn main() !void {
     var file = try std.fs.cwd().createFile("main.c", .{});
     defer file.close();
     try execute.c_code(file.writer());
+    for (items) |item| {
+        _ = try execute.execute(item.equation, alloc);
+    }
     try bw.flush(); // don't forget to flush!
 }
 
