@@ -7,6 +7,7 @@ pub const AST = struct {
     };
     pub const NodeType = union(enum) {
         operator: Operator,
+        constant: i64,
     };
     pub const Node = struct {
         nodeType: NodeType,
@@ -14,9 +15,12 @@ pub const AST = struct {
     };
 };
 
-const ASTTest = struct {
-    tokens: []const tokenize.Token,
-};
+fn constant(val: i64) AST.Node {
+    return .{
+        .nodeType = .{ .constant = val },
+        .subNodes = &.{},
+    };
+}
 
 fn astGen(tokens: []tokenize.Token) AST {
     _ = tokens;
@@ -25,4 +29,28 @@ fn astGen(tokens: []tokenize.Token) AST {
 
 const TestCase = struct {
     tokens: []const tokenize.Token,
+    ast: AST,
 };
+
+test {
+    const tc = [_]TestCase{
+        .{
+            .tokens = &.{
+                .{
+                    .tokens = &.{
+                        .{ .number = 10 },
+                        .{ .operator = .Add },
+                        .{ .number = 1 },
+                    },
+                },
+            },
+            .ast = .{
+                .root = .{
+                    .nodeType = .{ .operator = .Add },
+                    .subNodes = &.{ constant(10), constant(1) },
+                },
+            },
+        },
+    };
+    _ = tc;
+}
