@@ -13,6 +13,7 @@ pub const AST = struct {
         nodeType: NodeType,
         subNodes: []const Node,
     };
+    root: Node,
 };
 
 fn constant(val: i64) AST.Node {
@@ -22,9 +23,10 @@ fn constant(val: i64) AST.Node {
     };
 }
 
-fn astGen(tokens: []tokenize.Token) AST {
-    _ = tokens;
-    return .{};
+fn astGen(tokens: []const tokenize.Token, alloc: std.mem.Allocator) AST {
+    return .{
+        .root = constant(10),
+    };
 }
 
 const TestCase = struct {
@@ -36,13 +38,9 @@ test {
     const tc = [_]TestCase{
         .{
             .tokens = &.{
-                .{
-                    .tokens = &.{
-                        .{ .number = 10 },
-                        .{ .operator = .Add },
-                        .{ .number = 1 },
-                    },
-                },
+                .{ .number = 10 },
+                .{ .operator = .Add },
+                .{ .number = 1 },
             },
             .ast = .{
                 .root = .{
@@ -52,5 +50,8 @@ test {
             },
         },
     };
-    _ = tc;
+    const alloc = std.testing.allocator;
+    for (tc) |t| {
+        _ = astGen(t.tokens, alloc);
+    }
 }

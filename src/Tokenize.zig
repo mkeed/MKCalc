@@ -70,17 +70,17 @@ fn parseInt(data: []const u8) ParseFuncError!Token {
     const val = std.fmt.parseInt(i64, data, 0) catch {
         return ParseFuncError.InvalidParse;
     };
-    return .{ .number = val };
+    return .{ .Number = val };
 }
 
 fn parseIdentifier(data: []const u8) ParseFuncError!Token {
     return .{
-        .identifier = data,
+        .Identifier = data,
     };
 }
 fn unitsParse(data: []const u8) ParseFuncError!Token {
     return .{
-        .unit = data[1..],
+        .Units = data[1..],
     };
 }
 const tokenInfos = [_]TokenInfo{
@@ -125,11 +125,6 @@ const tokenInfos = [_]TokenInfo{
     },
 };
 
-// pub const Token = struct {
-//     data: []const u8,
-//     tokenType: TokenType,
-// };
-
 pub const Operator = enum {
     Add,
     Subtract,
@@ -148,7 +143,7 @@ pub const Operator = enum {
         .parse = &operatorParse,
     };
     fn operatorParse(data: []const u8) ParseFuncError!Token {
-        return .{ .operator = switch (data[0]) {
+        return .{ .Operator = switch (data[0]) {
             '+' => .Add,
             '-' => .Subtract,
             '/' => .Divide,
@@ -166,37 +161,37 @@ pub const Operator = enum {
     }
 };
 
-pub const Token = union(enum) {
-    operator: Operator,
-    number: i64,
-    identifier: []const u8,
-    unit: []const u8,
+pub const Token = union(TokenType) {
+    Operator: Operator,
+    Number: i64,
+    Identifier: []const u8,
+    Units: []const u8,
     pub fn compare(self: Token, other: Token) bool {
         switch (self) {
-            .operator => |val| {
+            .Operator => |val| {
                 const oval = switch (other) {
-                    .operator => |otherval| otherval,
+                    .Operator => |otherval| otherval,
                     else => return false,
                 };
                 return oval == val;
             },
-            .number => |val| {
+            .Number => |val| {
                 const oval = switch (other) {
-                    .number => |otherval| otherval,
+                    .Number => |otherval| otherval,
                     else => return false,
                 };
                 return oval == val;
             },
-            .identifier => |val| {
+            .Identifier => |val| {
                 const oval = switch (other) {
-                    .identifier => |otherval| otherval,
+                    .Identifier => |otherval| otherval,
                     else => return false,
                 };
                 return std.mem.eql(u8, oval, val);
             },
-            .unit => |val| {
+            .Units => |val| {
                 const oval = switch (other) {
-                    .unit => |otherval| otherval,
+                    .Units => |otherval| otherval,
                     else => return false,
                 };
                 return std.mem.eql(u8, oval, val);
@@ -248,26 +243,24 @@ test {
     const testCases = [_]TokenTest{
         .{
             .equation = "10 + 1",
-            .tokens = &.{ .{ .number = 10 }, .{ .operator = .Add }, .{ .number = 1 } },
+            .tokens = &.{ .{ .Number = 10 }, .{ .Operator = .Add }, .{ .Number = 1 } },
         },
         .{
             .equation = "10+1/2-2#kg",
             .tokens = &.{
-                .{ .number = 10 },
-                .{ .operator = .Add },
-                .{ .number = 1 },
-                .{ .operator = .Divide },
-                .{ .number = 2 },
-                .{ .operator = .Subtract },
-                .{ .number = 2 },
-                .{ .unit = "kg" },
+                .{ .Number = 10 },
+                .{ .Operator = .Add },
+                .{ .Number = 1 },
+                .{ .Operator = .Divide },
+                .{ .Number = 2 },
+                .{ .Operator = .Subtract },
+                .{ .Number = 2 },
+                .{ .Units = "kg" },
             },
         },
     };
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const alloc = gpa.allocator();
+    const alloc = std.testing.allocator;
     for (testCases) |tc| {
         var tokens = try tokenize(tc.equation, alloc);
         defer tokens.deinit();
@@ -276,3 +269,15 @@ test {
         }
     }
 }
+
+const ParsedToken = struct {};
+
+const ParseInfo = struct {
+    list: []const TokenType,
+};
+
+const parseInfo = [_]ParseInfo{
+    .{
+        .list = &.{ .Number, .Units },
+    },
+};
