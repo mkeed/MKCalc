@@ -62,3 +62,13 @@ const Coulomb = Unit{ .time = 1, .current = 1 };
 test {
     try std.testing.expect(Pascal.equal(Newton.divide(SqMetre)));
 }
+
+pub const UnitRatio = struct {
+    unit: Unit,
+    ratio: f64,
+};
+
+pub const UnitName = struct {
+    name: []const u8,
+    unit: UnitRatio,
+};
