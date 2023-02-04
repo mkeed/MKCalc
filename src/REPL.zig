@@ -1,4 +1,5 @@
 const std = @import("std");
+const execute = @import("execute.zig");
 
 pub const Options = struct {};
 
@@ -7,12 +8,13 @@ pub fn run(alloc: std.mem.Allocator, opts: Options) !void {
     const stdin = std.io.getStdIn().reader();
 
     _ = opts;
-    _ = alloc;
     while (true) {
         try std.fmt.format(stdout, "$ ", .{});
         var readBuffer: [512]u8 = undefined;
-        const result = try stdin.read(readBuffer[0..]);
-        std.log.info("{s}", .{readBuffer[0..result]});
-        return;
+        const equation = readBuffer[0..try stdin.read(readBuffer[0..])];
+        if (std.mem.eql(u8, "quit", std.mem.trim(u8, equation, std.ascii.whitespace[0..]))) return;
+
+        const result = try execute.execute(equation, alloc);
+        std.log.info("{s} => {}", .{ equation, result });
     }
 }

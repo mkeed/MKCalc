@@ -44,8 +44,8 @@ const ParseFunc = *const fn (data: []const u8) ParseFuncError!Token;
 const TokenInfo = struct {
     begin: []const MatchCase,
     internal: []const MatchCase,
-    tokenType: TokenType,
-    parse: ParseFunc,
+    tokenType: ?TokenType,
+    parse: ?ParseFunc,
     pub fn match(self: TokenInfo, text: []const u8) ?usize {
         var anyMatch = false;
         for (self.begin) |b| {
@@ -122,6 +122,12 @@ const tokenInfos = [_]TokenInfo{
         },
         .tokenType = .Units,
         .parse = unitsParse,
+    },
+    .{
+        .begin = &.{.{ .list = &.{ " ", "\t", "\n" } }},
+        .internal = &.{.{ .list = &.{ " ", "\t", "\n" } }},
+        .tokenType = null,
+        .parse = null,
     },
 };
 
@@ -200,16 +206,16 @@ pub const Token = union(TokenType) {
     }
     pub fn format(value: Token, comptime _: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
         switch (value) {
-            .operator => |op| {
+            .Operator => |op| {
                 try std.fmt.format(writer, "Operator => [{}]", .{op});
             },
-            .number => |num| {
+            .Number => |num| {
                 try std.fmt.format(writer, "Number => [{}]", .{num});
             },
-            .identifier => |id| {
+            .Identifier => |id| {
                 try std.fmt.format(writer, "identifier => [{s}]", .{id});
             },
-            .unit => |id| {
+            .Units => |id| {
                 try std.fmt.format(writer, "unit => [{s}]", .{id});
             },
         }
@@ -224,12 +230,15 @@ pub fn tokenize(equation: []const u8, alloc: std.mem.Allocator) !std.ArrayList(T
     outer: while (count < equation.len) : (count += 1) {
         for (tokenInfos) |ti| {
             if (ti.match(equation[count..])) |m| {
-                const t = try ti.parse(equation[count .. count + m]);
-                try tokens.append(t);
+                if (ti.parse) |parse| {
+                    const t = try parse(equation[count .. count + m]);
+                    try tokens.append(t);
+                }
                 count += (m - 1);
                 continue :outer;
             }
         }
+        return error.InvalidToken;
     }
     return tokens;
 }
