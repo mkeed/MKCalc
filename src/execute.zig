@@ -1,14 +1,15 @@
 const std = @import("std");
 const Result = usize;
 const tokenize = @import("Tokenize.zig");
+const AST = @import("AST.zig");
 
 pub fn execute(equation: []const u8, alloc: std.mem.Allocator) !Result {
     //
     var tokens = try tokenize.tokenize(equation, alloc);
     defer tokens.deinit();
-    for (tokens.items) |t| {
-        std.log.info("token:{}", .{t});
-    }
+
+    var ast = try AST.astGen(tokens.items, alloc);
+    defer ast.deinit();
     return 1;
 }
 

@@ -8,12 +8,32 @@ pub const AST = struct {
     pub const NodeType = union(enum) {
         operator: Operator,
         constant: i64,
+        root: void,
     };
     pub const Node = struct {
         nodeType: NodeType,
-        subNodes: []const Node,
+        subNodes: std.ArrayList(Node),
+        pub fn deinit(self: Node) void {
+            for (self.subNodes.items) |sub| {
+                sub.deinit();
+            }
+            self.subNodes.deinit();
+        }
     };
     root: Node,
+    alloc: std.mem.Allocator,
+    pub fn init(alloc: std.mem.Allocator) AST {
+        return .{
+            .root = .{
+                .nodeType = .root,
+                .subNodes = std.ArrayList(*Node).init(alloc),
+            },
+            .alloc = alloc,
+        };
+    }
+    pub fn deinit(self: AST) void {
+        self.root.deinit();
+    }
 };
 
 fn constant(val: i64) AST.Node {
@@ -23,10 +43,13 @@ fn constant(val: i64) AST.Node {
     };
 }
 
-fn astGen(tokens: []const tokenize.Token, alloc: std.mem.Allocator) AST {
-    return .{
-        .root = constant(10),
-    };
+pub fn astGen(tokens: []const tokenize.Token, alloc: std.mem.Allocator) !AST {
+    var ast = AST.init(alloc);
+    for (tokens) |t| {
+        std.log.info("token:{}", .{t});
+    }
+
+    return ast;
 }
 
 const TestCase = struct {

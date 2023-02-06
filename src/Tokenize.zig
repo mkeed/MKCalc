@@ -283,10 +283,47 @@ const ParsedToken = struct {};
 
 const ParseInfo = struct {
     list: []const TokenType,
+    name: []const u8,
+    pub fn match(self: ParseInfo, tokens: []const Token) ?usize {
+        if (self.list.len == 0 or tokens.len < self.list.len) return null;
+        for (self.list) |li, idx| {
+            if (li != tokens[idx]) return null;
+        }
+        return self.list.len;
+    }
 };
 
 const parseInfo = [_]ParseInfo{
     .{
         .list = &.{ .Number, .Units },
+        .name = "Number With Unit",
     },
+    .{
+        .list = &.{.Number},
+        .name = "Number",
+    },
+    .{
+        .list = &.{.Operator},
+        .name = "Operator",
+    },
+    .{},
 };
+
+pub fn tokenizeStage2(tokens: []const Token, alloc: std.mem.Allocator) !std.ArrayList(ParsedToken) {
+    //
+    var tokens2 = std.ArrayList(ParsedToken).init(alloc);
+    errdefer tokens2.deinit();
+    var count: usize = 0;
+    outer: while (count < tokens.len) : (count += 1) {
+        for (parseInfo) |pi| {
+            if (pi.match(tokens[count..])) |matchLen| {
+                count += (matchLen - 1);
+                std.log.info("{s}", .{pi.name});
+                continue :outer;
+            }
+        }
+        std.log.err("{}", .{tokens[count]});
+        return error.TokenNotFound;
+    }
+    return tokens2;
+}
