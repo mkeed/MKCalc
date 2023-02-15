@@ -70,5 +70,10 @@ pub const UnitRatio = struct {
 
 pub const UnitName = struct {
     name: []const u8,
+    abbrev: []const u8,
     unit: UnitRatio,
+};
+
+pub const units = [_]UnitName{
+    .{ .name = "seconds", .abbrev = "s", .unit = .{ .unit = Seconds, .ratio = 1 } },
 };

@@ -10,6 +10,9 @@ pub fn execute(equation: []const u8, alloc: std.mem.Allocator) !Result {
 
     var ast = try AST.astGen(tokens.items, alloc);
     defer ast.deinit();
+
+    const stdout = std.io.getStdOut().writer();
+    try ast.generateDOT(stdout);
     return 1;
 }
 
